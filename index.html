@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizator Opinii Google Maps</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4285f4 0%, #0f9d58 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .textarea-container {
+            position: relative;
+        }
+
+        #reviewsInput {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        #reviewsInput:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #4285f4 0%, #0f9d58 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(66, 133, 244, 0.3);
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .stat-card p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .date-analysis {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .date-analysis h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .date-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .date-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #4285f4;
+        }
+
+        .likes-analysis {
+            background: #e8f5e8;
+            padding: 25px;
+            border-radius: 15px;
+        }
+
+        .likes-analysis h3 {
+            color: #0f9d58;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 4px solid #c62828;
+        }
+
+        .sample-format {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌟 Analizator Opinii Google Maps</h1>
+            <p>Przeanalizuj negatywne opinie (1-2 gwiazdki) i otrzymaj szczegółowe statystyki</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2>📝 Wklej opinie do analizy</h2>
+                <div class="textarea-container">
+                    <textarea id="reviewsInput" placeholder="Wklej tutaj opinie z Google Maps...
+
+Przykładowy format:
+Jan Kowalski
+⭐ (1 gwiazdka)
+2 tygodnie temu
+Bardzo słaba obsługa...
+👍 5
+
+Anna Nowak  
+⭐⭐ (2 gwiazdki)
+1 miesiąc temu
+Długie oczekiwanie...
+👍 12"></textarea>
+                </div>
+                <button class="analyze-btn" onclick="analyzeReviews()">🔍 Analizuj Opinie</button>
+                
+                <div class="sample-format">
+                    <strong>Obsługiwane formaty:</strong><br>
+                    • Gwiazdki: ⭐, ★, "1 gwiazdka", "2 gwiazdki", "1/5", "2/5"<br>
+                    • Daty: "2 tygodnie temu", "1 miesiąc temu", "3 miesiące temu", "2024-01-15"<br>
+                    • Polubienia: "👍 5", "5 polubień", "Pomocne: 5"
+                </div>
+            </div>
+
+            <div id="errorContainer"></div>
+
+            <div id="resultsSection" class="results-section">
+                <h2>📊 Wyniki Analizy</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3 id="totalReviews">0</h3>
+                        <p>Łączna liczba opinii</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="oneStarCount">0</h3>
+                        <p>Opinie 1 gwiazdka</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="twoStarCount">0</h3>
+                        <p>Opinie 2 gwiazdki</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="totalLikes">0</h3>
+                        <p>Łączne polubienia</p>
+                    </div>
+                </div>
+
+                <div class="date-analysis">
+                    <h3>📅 Analiza czasowa</h3>
+                    <div class="date-breakdown" id="dateBreakdown">
+                        <!-- Dynamically filled -->
+                    </div>
+                </div>
+
+                <div class="likes-analysis">
+                    <h3>👍 Analiza polubień</h3>
+                    <div id="likesBreakdown">
+                        <!-- Dynamically filled -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="analyzer.js"></script>
+</body>
+</html>
